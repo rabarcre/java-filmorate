@@ -33,7 +33,7 @@ public class UserService {
             );
         }
 
-        if (user.getLogin() == null || user.getLogin().contains(" ")) {
+        if (user.getLogin() == null || user.getLogin().contains(" ") || (user.getLogin().isBlank())) {
             log.error("Логин пустой или содержит пробелы");
             throw new ConditionsNotMetException("Логин не может быть пустым или содержать пробелы.");
         }
