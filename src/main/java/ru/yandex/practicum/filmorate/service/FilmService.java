@@ -14,8 +14,8 @@ import java.util.Map;
 @Service
 public class FilmService {
     private final Map<Long, Film> films = new HashMap<>();
-    private final LocalDate DATE_TO_CHECK = LocalDate.of(1895, 12, 28);
-    private final Integer MAX_DESCR_LENGTH = 200;
+    private static final LocalDate DATE_TO_CHECK = LocalDate.of(1895, 12, 28);
+    private static final Integer MAX_DESCR_LENGTH = 200;
 
     public Collection<Film> findAll() {
         return films.values();
