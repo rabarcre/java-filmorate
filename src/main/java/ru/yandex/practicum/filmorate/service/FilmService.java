@@ -14,8 +14,8 @@ import java.util.Map;
 @Service
 public class FilmService {
     private final Map<Long, Film> films = new HashMap<>();
-    private final LocalDate DATETOCHECK = LocalDate.of(1895, 12, 28);
-    private final Integer MAXDESCRLENGTH = 200;
+    private final LocalDate DATE_TO_CHECK = LocalDate.of(1895, 12, 28);
+    private final Integer MAX_DESCR_LENGTH = 200;
 
     public Collection<Film> findAll() {
         return films.values();
@@ -70,9 +70,9 @@ public class FilmService {
     }
 
     public void dateCheck(Film film) {
-        if (film.getReleaseDate().isBefore(DATETOCHECK)) {
+        if (film.getReleaseDate().isBefore(DATE_TO_CHECK)) {
             log.error("Дата релиза раньше фиксированной даты: {} .", film.getReleaseDate());
-            throw new ConditionsNotMetException("Дата релиза не может быть раньше " + DATETOCHECK);
+            throw new ConditionsNotMetException("Дата релиза не может быть раньше " + DATE_TO_CHECK);
         }
     }
 
@@ -84,7 +84,7 @@ public class FilmService {
     }
 
     public void lengthCheck(Film film) {
-        if (film.getDescription().length() > MAXDESCRLENGTH) {
+        if (film.getDescription().length() > MAX_DESCR_LENGTH) {
             log.error("Максимальная длинна описания превысила максимальное количество символов: {} .",
                     film.getDescription().length());
             throw new ConditionsNotMetException("Максимальная длинна описания не должна превышать 200 символов");
