@@ -25,30 +25,10 @@ public class UserService {
     }
 
     public User add(User user) {
-
-        if (user.getEmail().isBlank() || !user.getEmail().contains("@")) {
-            log.error("Электронная почта пустая или не содержит \"@\": {} .", user.getEmail());
-            throw new ConditionsNotMetException(
-                    "Электронная почта не должна быть пустой и должна содержать символ \"@\"."
-            );
-        }
-
-        if (user.getLogin() == null || user.getLogin().contains(" ") || (user.getLogin().isBlank())) {
-            log.error("Логин пустой или содержит пробелы");
-            throw new ConditionsNotMetException("Логин не может быть пустым или содержать пробелы.");
-        }
-
-        if (user.getBirthday() != null) {
-            LocalDate birthday = LocalDate.parse(user.getBirthday());
-            if (birthday.isAfter(instantAsLocalDate)) {
-                log.error("День рождения указан в будущем");
-                throw new ConditionsNotMetException("День рождения не может быть в будущем.");
-            }
-        }
-
-        if (user.getName() == null) {
-            user.setName(user.getLogin());
-        }
+        emailCheck(user);
+        loginCheck(user);
+        birthdayCheck(user);
+        nameCheck(user);
 
         user.setId(getNextId());
         users.put(user.getId(), user);
@@ -62,30 +42,10 @@ public class UserService {
             log.error("Id не указан");
             throw new ConditionsNotMetException("Id должен быть указан");
         }
-
-        if (!updUser.getEmail().contains("@")) {
-            log.error("Электронная почта указана неверно");
-            throw new ConditionsNotMetException(
-                    "Электронная почта не должна быть пустой и должна содержать символ \"@\"."
-            );
-        }
-
-        if (updUser.getLogin().contains(" ")) {
-            log.error("Логин содержит пробелы");
-            throw new ConditionsNotMetException("Логин не может содержать пробелы.");
-        }
-
-        if (updUser.getBirthday() != null) {
-            LocalDate birthday = LocalDate.parse(updUser.getBirthday());
-            if (birthday.isAfter(instantAsLocalDate)) {
-                log.error("День рождения указан в будущем");
-                throw new ConditionsNotMetException("День рождения не может быть в будущем.");
-            }
-        }
-
-        if (updUser.getName() == null) {
-            updUser.setName(updUser.getLogin());
-        }
+        emailCheck(updUser);
+        loginCheck(updUser);
+        birthdayCheck(updUser);
+        nameCheck(updUser);
 
         if (users.containsKey(updUser.getId())) {
             User oldUser = users.get(updUser.getId());
@@ -107,6 +67,38 @@ public class UserService {
             return updUser;
         } else {
             throw new ConditionsNotMetException("Пользователь с таким Id не существует");
+        }
+    }
+
+    private void emailCheck(User user) {
+        if (user.getEmail().isBlank() || !user.getEmail().contains("@")) {
+            log.error("Электронная почта пустая или не содержит \"@\": {} .", user.getEmail());
+            throw new ConditionsNotMetException(
+                    "Электронная почта не должна быть пустой и должна содержать символ \"@\"."
+            );
+        }
+    }
+
+    private void loginCheck(User user) {
+        if (user.getLogin() == null || user.getLogin().contains(" ") || (user.getLogin().isBlank())) {
+            log.error("Логин пустой или содержит пробелы");
+            throw new ConditionsNotMetException("Логин не может быть пустым или содержать пробелы.");
+        }
+    }
+
+    private void birthdayCheck(User user) {
+        if (user.getBirthday() != null) {
+            LocalDate birthday = LocalDate.parse(user.getBirthday());
+            if (birthday.isAfter(instantAsLocalDate)) {
+                log.error("День рождения указан в будущем");
+                throw new ConditionsNotMetException("День рождения не может быть в будущем.");
+            }
+        }
+    }
+
+    private void nameCheck(User user) {
+        if (user.getName() == null) {
+            user.setName(user.getLogin());
         }
     }
 
