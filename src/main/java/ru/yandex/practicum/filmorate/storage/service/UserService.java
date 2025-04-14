@@ -203,6 +203,10 @@ public class UserService {
         }
     }
 
+    public boolean userExists(Long userId) {
+        return users.containsKey(userId);
+    }
+
     private long getNextId() {
         long currentMaxId = users.keySet()
                 .stream()

@@ -18,9 +18,14 @@ import java.util.Map;
 @Service
 public class FilmService {
     private final Map<Long, Film> films = new HashMap<>();
+    private final UserService userService;
 
     private static final LocalDate DATE_TO_CHECK = LocalDate.of(1895, 12, 28);
     private static final Integer MAX_DESCR_LENGTH = 200;
+
+    public FilmService(UserService userService) {
+        this.userService = userService;
+    }
 
     public Collection<Film> findAll() {
         return films.values();
@@ -79,8 +84,7 @@ public class FilmService {
         idCheck(filmId);
         idMapCheck(filmId);
         doubleLikeCheck(filmId, userId);
-        UserService userService = new UserService();
-        if (!userService.getUsers().containsKey(userId)) {
+        if (!userService.userExists(filmId)) {
             log.error("Пользователя с Id {} не существует", userId);
             throw new ConditionsNotMetException("Пользователя с таким Id не существует: " + userId);
         }
@@ -91,7 +95,7 @@ public class FilmService {
         film.setUserIdLikes(userLikes);
         film.setLikesCount(film.getLikesCount() + 1);
         films.put(filmId, film);
-        log.info("Пользователь {} поставил лайкф фильму {}", userId, filmId);
+        log.info("Пользователь {} поставил лайк фильму {}", userId, filmId);
     }
 
     public void deleteLike(Long filmId, Long userId) {
