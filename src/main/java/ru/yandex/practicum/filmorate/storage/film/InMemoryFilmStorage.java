@@ -43,7 +43,7 @@ public class InMemoryFilmStorage implements FilmStorage {
         return filmService.updateFilm(updFilm);
     }
 
-    @GetMapping(value = "/{filmId}/like/{userId}")
+    @PutMapping(value = "/{filmId}/like/{userId}")
     @Override
     public void addLike(@PathVariable("filmId") Long filmId, @PathVariable("userId") Long userId) {
         filmService.addLike(filmId, userId);

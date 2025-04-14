@@ -18,7 +18,6 @@ import java.util.Map;
 @Service
 public class FilmService {
     private final Map<Long, Film> films = new HashMap<>();
-    private final UserService userService = new UserService();
 
     private static final LocalDate DATE_TO_CHECK = LocalDate.of(1895, 12, 28);
     private static final Integer MAX_DESCR_LENGTH = 200;
@@ -77,11 +76,14 @@ public class FilmService {
     // Пока пусть каждый пользователь может поставить лайк фильму только один раз.
 
     public void addLike(Long filmId, Long userId) {
-        userService.idCheck(userId);
-        userService.mapIdCheck(userId);
         idCheck(filmId);
         idMapCheck(filmId);
         doubleLikeCheck(filmId, userId);
+        UserService userService = new UserService();
+        if (!userService.getUsers().containsKey(userId)) {
+            log.error("Пользователя с Id {} не существует", userId);
+            throw new ConditionsNotMetException("Пользователя с таким Id не существует: " + userId);
+        }
 
         Film film = films.get(filmId);
         List<Long> userLikes = film.getUserIdLikes();
@@ -89,11 +91,10 @@ public class FilmService {
         film.setUserIdLikes(userLikes);
         film.setLikesCount(film.getLikesCount() + 1);
         films.put(filmId, film);
+        log.info("Пользователь {} поставил лайкф фильму {}", userId, filmId);
     }
 
     public void deleteLike(Long filmId, Long userId) {
-        userService.idCheck(userId);
-        userService.mapIdCheck(userId);
         idCheck(filmId);
         idMapCheck(filmId);
         likeExistsCheck(filmId, userId);
@@ -113,7 +114,7 @@ public class FilmService {
         Integer finalCount = count;
         return films.values().stream()
                 .sorted(Comparator.comparing(Film::getLikesCount).reversed())
-                .filter(film -> film.getLikesCount().equals(finalCount))
+                .filter(film -> film.getLikesCount() == (finalCount))
                 .toList();
     }
 

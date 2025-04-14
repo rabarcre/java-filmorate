@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.storage.service;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
@@ -18,6 +19,8 @@ import java.util.Map;
 @Slf4j
 @Service
 public class UserService {
+
+    @Getter
     private final Map<Long, User> users = new HashMap<>();
 
     private final Instant instant = Instant.now();
