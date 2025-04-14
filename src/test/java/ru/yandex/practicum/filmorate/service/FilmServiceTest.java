@@ -2,7 +2,9 @@ package ru.yandex.practicum.filmorate.service;
 
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.storage.service.FilmService;
 
 import java.time.LocalDate;
 
@@ -20,8 +22,8 @@ class FilmServiceTest {
         film.setReleaseDate(LocalDate.of(2000, 10, 10));
         film.setDuration(2000);
 
-        assertThrows(ConditionsNotMetException.class, () -> {
-            filmService.add(film);
+        assertThrows(ValidationException.class, () -> {
+            filmService.addFilm(film);
         });
     }
 
@@ -33,8 +35,8 @@ class FilmServiceTest {
         film.setReleaseDate(LocalDate.of(1800, 10, 10));
         film.setDuration(2000);
 
-        assertThrows(ConditionsNotMetException.class, () -> {
-            filmService.add(film);
+        assertThrows(ValidationException.class, () -> {
+            filmService.addFilm(film);
         });
     }
 
@@ -46,8 +48,8 @@ class FilmServiceTest {
         film.setReleaseDate(LocalDate.of(2000, 10, 10));
         film.setDuration(-2000);
 
-        assertThrows(ConditionsNotMetException.class, () -> {
-            filmService.add(film);
+        assertThrows(ValidationException.class, () -> {
+            filmService.addFilm(film);
         });
     }
 
@@ -62,8 +64,8 @@ class FilmServiceTest {
         film.setReleaseDate(LocalDate.of(2000, 10, 10));
         film.setDuration(2000);
 
-        assertThrows(ConditionsNotMetException.class, () -> {
-            filmService.add(film);
+        assertThrows(ValidationException.class, () -> {
+            filmService.addFilm(film);
         });
     }
 }

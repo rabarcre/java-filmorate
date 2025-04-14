@@ -2,7 +2,9 @@ package ru.yandex.practicum.filmorate.service;
 
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.service.UserService;
 
 import java.time.LocalDate;
 
@@ -20,8 +22,8 @@ class UserServiceTest {
         user.setBirthday("1900-12-12");
         user.setName("name");
 
-        assertThrows(ConditionsNotMetException.class, () -> {
-            userService.add(user);
+        assertThrows(ValidationException.class, () -> {
+            userService.addUser(user);
         });
     }
 
@@ -33,8 +35,8 @@ class UserServiceTest {
         user.setBirthday("1900-12-12");
         user.setName("name");
 
-        assertThrows(ConditionsNotMetException.class, () -> {
-            userService.add(user);
+        assertThrows(ValidationException.class, () -> {
+            userService.addUser(user);
         });
     }
 
@@ -46,8 +48,8 @@ class UserServiceTest {
         user.setBirthday("1900-12-12");
         user.setName("name");
 
-        assertThrows(ConditionsNotMetException.class, () -> {
-            userService.add(user);
+        assertThrows(ValidationException.class, () -> {
+            userService.addUser(user);
         });
     }
 
@@ -59,8 +61,8 @@ class UserServiceTest {
         user.setBirthday("1900-12-12");
         user.setName("name");
 
-        assertThrows(ConditionsNotMetException.class, () -> {
-            userService.add(user);
+        assertThrows(ValidationException.class, () -> {
+            userService.addUser(user);
         });
     }
 
@@ -72,8 +74,8 @@ class UserServiceTest {
         user.setBirthday(LocalDate.now().plusDays(1).toString());
         user.setName("name");
 
-        assertThrows(ConditionsNotMetException.class, () -> {
-            userService.add(user);
+        assertThrows(ValidationException.class, () -> {
+            userService.addUser(user);
         });
     }
 }
