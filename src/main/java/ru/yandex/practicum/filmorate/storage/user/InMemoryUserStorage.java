@@ -14,7 +14,6 @@ import ru.yandex.practicum.filmorate.storage.service.UserService;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 @Component
 @RestController
