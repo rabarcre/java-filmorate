@@ -85,12 +85,11 @@ public class UserService {
         User friend = users.get(friendId);
         List<User> friendList = user.getFriendList();
         List<User> otherFriendList = friend.getFriendList();
-        for (User repeatableFriend : friendList) {
-            if (friendList.contains(repeatableFriend)) {
-                log.error("Друг с таким Id уже добавлен: {}", friendId);
-                throw new ValidationException("Друг с таким Id уже добавлен: " + friendId);
-            }
+        if (friendList.contains(friend)) {
+            log.error("Друг с таким Id уже добавлен: {}", friendId);
+            throw new ValidationException("Друг с таким Id уже добавлен: " + friendId);
         }
+
         friendList.add(friend);
         user.setFriendList(friendList);
 
@@ -111,18 +110,18 @@ public class UserService {
         List<User> friendList = user.getFriendList();
         User friend = users.get(friendId);
         List<User> otherFriendList = friend.getFriendList();
-        for (User value : friendList) {
-            if (value.getId().equals(friendId)) {
-                friendList.remove(value);
-                user.setFriendList(friendList);
-                otherFriendList.remove(value);
-                friend.setFriendList(otherFriendList);
-                users.put(userId, user);
-                log.info("Пользователь {} удалил друга {}", userId, friendId);
-            } else {
-                log.error("Id друга указан неверно");
-                throw new ConditionsNotMetException("Id друга указан неверно или такого друга не существует");
-            }
+
+        if (friendList.contains(friend)) {
+            friendList.remove(friend);
+            user.setFriendList(friendList);
+            otherFriendList.remove(user);
+            friend.setFriendList(otherFriendList);
+            users.put(userId, user);
+            users.put(friendId, friend);
+            log.info("Пользователь {} удалил друга {}", userId, friendId);
+        } else {
+            log.error("Пользователь {} пытается удалить несуществующий или не имеющийся в друзьях Id: {}", userId, friendId);
+            throw new ConditionsNotMetException("Id друга указан неверно или такого друга не существует");
         }
     }
 
