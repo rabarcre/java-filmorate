@@ -57,7 +57,7 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @GetMapping(value = "/popular?count={count}")
     @Override
-    public List<Film> topLikesCount(@PathVariable("count") Integer count) {
-        return filmService.filmsWithTopLikesCount(count);
+    public List<Film> findTopLikesCount(@PathVariable("count") Integer count) {
+        return filmService.findFilmsWithTopLikesCount(count);
     }
 }
