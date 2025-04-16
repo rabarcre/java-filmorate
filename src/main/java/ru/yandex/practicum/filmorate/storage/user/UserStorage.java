@@ -4,7 +4,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.Set;
 
 public interface UserStorage {
     Collection<User> findAllUsers();
@@ -13,11 +13,11 @@ public interface UserStorage {
 
     User updateUser(@RequestBody User updUser);
 
-    void addFriend(Long userId, Long friendId);
+    void addFriend(int userId, int friendId);
 
-    void deleteFriend(Long userId, Long friendId);
+    void deleteFriend(int userId, int friendId);
 
-    List<User> findAllFriends(Long userId);
+    Set<User> findAllFriends(int userId);
 
-    List<User> findAllMutualFriends(Long userId, Long otherUserId);
+    Set<User> findAllMutualFriends(int userId, int otherUserId);
 }

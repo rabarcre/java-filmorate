@@ -4,27 +4,30 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.exception.InternalException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 public class UserService {
 
     @Getter
-    private final Map<Long, User> users = new HashMap<>();
+    private final Map<Integer, User> users = new HashMap<>();
 
     private final Instant instant = Instant.now();
     private final LocalDate instantAsLocalDate = instant.atZone(ZoneId.systemDefault()).toLocalDate();
+    private int currentId = 0;
 
     public Collection<User> findAllUsers() {
         return users.values();
@@ -35,12 +38,8 @@ public class UserService {
         loginCheck(user);
         birthdayCheck(user);
         nameCheck(user);
-        if (user.getFriendList() == null) {
-            List<User> friendList = new ArrayList<>();
-            user.setFriendList(friendList);
-        }
+        user.setId(++currentId);
 
-        user.setId(getNextId());
         users.put(user.getId(), user);
         log.info("Добавлен пользователь: {}, {}", user.getId(), user.getName());
         return user;
@@ -77,8 +76,7 @@ public class UserService {
         }
     }
 
-    //добавление в друзья, удаление из друзей, вывод списка общих друзей
-    public void addFriend(Long userId, Long friendId) {
+    public void addFriend(int userId, int friendId) {
         idCheck(userId);
         idCheck(friendId);
         mapIdCheck(userId);
@@ -86,85 +84,76 @@ public class UserService {
 
         User user = users.get(userId);
         User friend = users.get(friendId);
-        List<User> friendList = user.getFriendList();
-        List<User> otherFriendList = friend.getFriendList();
-        if (friendList.contains(friend)) {
-            log.error("Друг с таким Id уже добавлен: {}", friendId);
-            throw new ValidationException("Друг с таким Id уже добавлен: " + friendId);
-        }
 
-        friendList.add(friend);
-        user.setFriendList(friendList);
+        user.addFriend(friendId);
+        friend.addFriend(userId);
 
-        otherFriendList.add(user);
-        friend.setFriendList(otherFriendList);
         users.put(userId, user);
         users.put(friendId, friend);
         log.info("Пользователю {} добавлен друг {}", userId, friendId);
     }
 
-    public void deleteFriend(Long userId, Long friendId) {
+    public void deleteFriend(int userId, int friendId) {
         idCheck(userId);
         idCheck(friendId);
         mapIdCheck(userId);
         mapIdCheck(friendId);
 
         User user = users.get(userId);
-        List<User> friendList = user.getFriendList();
         User friend = users.get(friendId);
-        List<User> otherFriendList = friend.getFriendList();
 
-        if (friendList.contains(friend)) {
-            friendList.remove(friend);
-            user.setFriendList(friendList);
-            otherFriendList.remove(user);
-            friend.setFriendList(otherFriendList);
-            users.put(userId, user);
-            users.put(friendId, friend);
-            log.info("Пользователь {} удалил друга {}", userId, friendId);
-        } else {
-            log.error("Пользователь {} пытается удалить несуществующий или не имеющийся в друзьях Id: {}", userId, friendId);
-            throw new ConditionsNotMetException("Id друга указан неверно или такого друга не существует");
-        }
+        user.removeFriend(friendId);
+        friend.removeFriend(userId);
+        users.put(userId, user);
+        users.put(friendId, friend);
+        log.info("Пользователь {} удалил друга {}", userId, friendId);
     }
 
-    public List<User> findAllFriends(Long userId) {
-        idCheck(userId);
-        mapIdCheck(userId);
+    public Set<User> findAllFriends(int userId) {
         User user = users.get(userId);
-        log.info("Все друзья для {}: {}", user.getId(), user.getFriendList());
-        return user.getFriendList();
+        log.info("Получение списка друзей пользователя {}", userId);
+
+
+        if (user == null) {
+            log.warn("Пользователь с ID {} не найден", userId);
+            throw new ConditionsNotMetException("Пользователь с ID " + userId + " не найден");
+        }
+
+        return user.getFriendsList().stream()
+                .map(users::get)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
     }
 
-    public List<User> findAllMutualFriends(Long userId, Long otherUserId) {
-        idCheck(userId);
-        idCheck(otherUserId);
-        mapIdCheck(userId);
-        mapIdCheck(otherUserId);
+    public Set<User> findAllMutualFriends(int userId, int otherUserId) {
+
 
         User user = users.get(userId);
         User otherUser = users.get(otherUserId);
-        List<User> friendList = user.getFriendList();
-        List<User> otherFriendList = otherUser.getFriendList();
-        List<User> mutualFriendList = new ArrayList<>();
-
-        for (User friend : friendList) {
-            if (otherFriendList.contains(friend)) {
-                mutualFriendList.add(friend);
-                log.info("Общий друг для {} и {} : {}", user.getId(), otherUser.getId(), friend);
-            }
+        if (user == null) {
+            log.warn("Пользователь с ID {} не найден", userId);
+            return Collections.emptySet();
         }
-        return mutualFriendList;
+
+        if (otherUser == null) {
+            log.warn("Пользователь с ID {} не найден", otherUserId);
+            return Collections.emptySet();
+        }
+        Set<User> userFriends = findAllFriends(userId);
+        Set<User> otherUserFriends = findAllFriends(otherUserId);
+        userFriends.retainAll(otherUserFriends);
+
+        return userFriends;
     }
 
-    public void idCheck(Long userId) {
+    public void idCheck(Integer userId) {
         if (userId == null) {
             log.error("Id не указан");
-            throw new ValidationException("Id должен быть указан");
+            throw new InternalException("Id должен быть указан");
         }
     }
 
-    public void mapIdCheck(Long userId) {
+    public void mapIdCheck(int userId) {
         if (!users.containsKey(userId)) {
             log.error("Пользователя с этим Id не существует: {}", userId);
             throw new ConditionsNotMetException("Пользователя с таким Id не существует: " + userId);
@@ -174,7 +163,7 @@ public class UserService {
     private void emailCheck(User user) {
         if (user.getEmail().isBlank() || !user.getEmail().contains("@")) {
             log.error("Электронная почта пустая или не содержит \"@\": {} .", user.getEmail());
-            throw new ValidationException(
+            throw new InternalException(
                     "Электронная почта не должна быть пустой и должна содержать символ \"@\"."
             );
         }
@@ -183,7 +172,7 @@ public class UserService {
     private void loginCheck(User user) {
         if (user.getLogin() == null || user.getLogin().contains(" ") || (user.getLogin().isBlank())) {
             log.error("Логин пустой или содержит пробелы");
-            throw new ValidationException("Логин не может быть пустым или содержать пробелы.");
+            throw new InternalException("Логин не может быть пустым или содержать пробелы.");
         }
     }
 
@@ -192,7 +181,7 @@ public class UserService {
             LocalDate birthday = LocalDate.parse(user.getBirthday());
             if (birthday.isAfter(instantAsLocalDate)) {
                 log.error("День рождения указан в будущем");
-                throw new ValidationException("День рождения не может быть в будущем.");
+                throw new InternalException("День рождения не может быть в будущем.");
             }
         }
     }
@@ -203,16 +192,8 @@ public class UserService {
         }
     }
 
-    public boolean userExists(Long userId) {
+    public boolean userExists(Integer userId) {
         return users.containsKey(userId);
     }
 
-    private long getNextId() {
-        long currentMaxId = users.keySet()
-                .stream()
-                .mapToLong(id -> id)
-                .max()
-                .orElse(0);
-        return ++currentMaxId;
-    }
 }

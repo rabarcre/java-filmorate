@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,17 +14,14 @@ import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.service.UserService;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.Set;
 
 @Component
 @RestController
 @RequestMapping(value = "/users")
+@RequiredArgsConstructor
 public class InMemoryUserStorage implements UserStorage {
     private final UserService userService;
-
-    public InMemoryUserStorage(UserService userService) {
-        this.userService = userService;
-    }
 
     @GetMapping
     @Override
@@ -45,26 +43,26 @@ public class InMemoryUserStorage implements UserStorage {
 
     @PutMapping(value = "/{userId}/friends/{friendId}")
     @Override
-    public void addFriend(@PathVariable("userId") Long userId, @PathVariable("friendId") Long friendId) {
+    public void addFriend(@PathVariable("userId") int userId, @PathVariable("friendId") int friendId) {
         userService.addFriend(userId, friendId);
     }
 
     @DeleteMapping(value = "/{userId}/friends/{friendId}")
     @Override
-    public void deleteFriend(@PathVariable("userId") Long userId, @PathVariable("friendId") Long friendId) {
+    public void deleteFriend(@PathVariable("userId") int userId, @PathVariable("friendId") int friendId) {
         userService.deleteFriend(userId, friendId);
     }
 
     @GetMapping(value = "/{userId}/friends")
     @Override
-    public List<User> findAllFriends(@PathVariable("userId") Long userId) {
+    public Set<User> findAllFriends(@PathVariable("userId") int userId) {
         return userService.findAllFriends(userId);
     }
 
     @GetMapping(value = "/{userId}/friends/common/{otherUserId}")
     @Override
-    public List<User> findAllMutualFriends(@PathVariable("userId") Long userId,
-                                           @PathVariable("otherUserId") Long otherUserId) {
+    public Set<User> findAllMutualFriends(@PathVariable("userId") int userId,
+                                          @PathVariable("otherUserId") int otherUserId) {
         return userService.findAllMutualFriends(userId, otherUserId);
     }
 
