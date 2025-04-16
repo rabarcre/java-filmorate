@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
-import ru.yandex.practicum.filmorate.exception.InternalException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
@@ -117,7 +116,7 @@ public class FilmService {
     public void checkName(Film film) {
         if (film.getName().isEmpty()) {
             log.error("Название не указано");
-            throw new InternalException("Название должно быть указано");
+            throw new ValidationException("Название должно быть указано");
         }
     }
 
@@ -138,14 +137,14 @@ public class FilmService {
     public void checkDate(Film film) {
         if (film.getReleaseDate().isBefore(DATE_TO_CHECK)) {
             log.error("Дата релиза раньше фиксированной даты: {} .", film.getReleaseDate());
-            throw new InternalException("Дата релиза не может быть раньше " + DATE_TO_CHECK);
+            throw new ValidationException("Дата релиза не может быть раньше " + DATE_TO_CHECK);
         }
     }
 
     public void checkDuration(Film film) {
         if (film.getDuration() < 0) {
             log.error("Продолжительность фильма отрицательное число: {} .", film.getDuration());
-            throw new InternalException("Продолжительность фильма должна быть положительным числом");
+            throw new ValidationException("Продолжительность фильма должна быть положительным числом");
         }
     }
 
@@ -153,7 +152,7 @@ public class FilmService {
         if (film.getDescription().length() > MAX_DESCR_LENGTH) {
             log.error("Максимальная длинна описания превысила максимальное количество символов: {} .",
                     film.getDescription().length());
-            throw new InternalException("Максимальная длинна описания не должна превышать 200 символов");
+            throw new ValidationException("Максимальная длинна описания не должна превышать 200 символов");
         }
     }
 

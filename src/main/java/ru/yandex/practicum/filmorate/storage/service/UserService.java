@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
-import ru.yandex.practicum.filmorate.exception.InternalException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.Instant;
@@ -149,7 +149,7 @@ public class UserService {
     public void idCheck(Integer userId) {
         if (userId == null) {
             log.error("Id не указан");
-            throw new InternalException("Id должен быть указан");
+            throw new ValidationException("Id должен быть указан");
         }
     }
 
@@ -163,7 +163,7 @@ public class UserService {
     private void emailCheck(User user) {
         if (user.getEmail().isBlank() || !user.getEmail().contains("@")) {
             log.error("Электронная почта пустая или не содержит \"@\": {} .", user.getEmail());
-            throw new InternalException(
+            throw new ValidationException(
                     "Электронная почта не должна быть пустой и должна содержать символ \"@\"."
             );
         }
@@ -172,7 +172,7 @@ public class UserService {
     private void loginCheck(User user) {
         if (user.getLogin() == null || user.getLogin().contains(" ") || (user.getLogin().isBlank())) {
             log.error("Логин пустой или содержит пробелы");
-            throw new InternalException("Логин не может быть пустым или содержать пробелы.");
+            throw new ValidationException("Логин не может быть пустым или содержать пробелы.");
         }
     }
 
@@ -181,7 +181,7 @@ public class UserService {
             LocalDate birthday = LocalDate.parse(user.getBirthday());
             if (birthday.isAfter(instantAsLocalDate)) {
                 log.error("День рождения указан в будущем");
-                throw new InternalException("День рождения не может быть в будущем.");
+                throw new ValidationException("День рождения не может быть в будущем.");
             }
         }
     }
