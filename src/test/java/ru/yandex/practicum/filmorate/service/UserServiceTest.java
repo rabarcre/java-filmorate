@@ -3,7 +3,7 @@ package ru.yandex.practicum.filmorate.service;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.service.UserService;
+import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 
 import java.time.LocalDate;
 
@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class UserServiceTest {
 
-    UserService userService = new UserService();
+    InMemoryUserStorage inMemoryUserStorage = new InMemoryUserStorage();
 
     @Test
     void shouldThrowExceptionIfEmailIsBlank() {
@@ -22,7 +22,7 @@ class UserServiceTest {
         user.setName("name");
 
         assertThrows(ValidationException.class, () -> {
-            userService.addUser(user);
+            inMemoryUserStorage.addUser(user);
         });
     }
 
@@ -35,7 +35,7 @@ class UserServiceTest {
         user.setName("name");
 
         assertThrows(ValidationException.class, () -> {
-            userService.addUser(user);
+            inMemoryUserStorage.addUser(user);
         });
     }
 
@@ -48,7 +48,7 @@ class UserServiceTest {
         user.setName("name");
 
         assertThrows(ValidationException.class, () -> {
-            userService.addUser(user);
+            inMemoryUserStorage.addUser(user);
         });
     }
 
@@ -61,7 +61,7 @@ class UserServiceTest {
         user.setName("name");
 
         assertThrows(ValidationException.class, () -> {
-            userService.addUser(user);
+            inMemoryUserStorage.addUser(user);
         });
     }
 
@@ -74,7 +74,7 @@ class UserServiceTest {
         user.setName("name");
 
         assertThrows(ValidationException.class, () -> {
-            userService.addUser(user);
+            inMemoryUserStorage.addUser(user);
         });
     }
 }

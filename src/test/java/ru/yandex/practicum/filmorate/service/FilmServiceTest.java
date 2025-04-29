@@ -3,8 +3,8 @@ package ru.yandex.practicum.filmorate.service;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.storage.service.FilmService;
-import ru.yandex.practicum.filmorate.storage.service.UserService;
+import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 
 import java.time.LocalDate;
 
@@ -12,8 +12,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class FilmServiceTest {
 
-    private UserService userService;
-    FilmService filmService = new FilmService(userService);
+    private InMemoryUserStorage inMemoryUserStorage;
+    InMemoryFilmStorage filmStorage = new InMemoryFilmStorage(inMemoryUserStorage);
 
     @Test
     void shouldThrowExceptionIfNameIsBlank() {
@@ -24,7 +24,7 @@ class FilmServiceTest {
         film.setDuration(2000);
 
         assertThrows(ValidationException.class, () -> {
-            filmService.addFilm(film);
+            filmStorage.addFilm(film);
         });
     }
 
@@ -37,7 +37,7 @@ class FilmServiceTest {
         film.setDuration(2000);
 
         assertThrows(ValidationException.class, () -> {
-            filmService.addFilm(film);
+            filmStorage.addFilm(film);
         });
     }
 
@@ -50,7 +50,7 @@ class FilmServiceTest {
         film.setDuration(-2000);
 
         assertThrows(ValidationException.class, () -> {
-            filmService.addFilm(film);
+            filmStorage.addFilm(film);
         });
     }
 
@@ -66,7 +66,7 @@ class FilmServiceTest {
         film.setDuration(2000);
 
         assertThrows(ValidationException.class, () -> {
-            filmService.addFilm(film);
+            filmStorage.addFilm(film);
         });
     }
 }
