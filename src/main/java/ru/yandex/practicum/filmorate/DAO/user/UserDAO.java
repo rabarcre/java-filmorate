@@ -119,7 +119,7 @@ public class UserDAO {
                     "WHERE f.USER_ID = ? AND f.STATUS = 'CONFIRMED'";
 
             List<User> friendList = jdbcTemplate.query(query, this::mapToUser, userId);
-            log.info("Пользователь {} дружит с {}", userId, String.valueOf(new HashSet<>(friendList)));
+            log.info("Пользователь {} дружит с {}", userId, new HashSet<>(friendList));
 
             return new HashSet<>(friendList);
         } catch (RuntimeException e) {

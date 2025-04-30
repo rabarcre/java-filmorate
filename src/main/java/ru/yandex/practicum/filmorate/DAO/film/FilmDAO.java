@@ -106,27 +106,28 @@ public class FilmDAO {
     public Film getFilmById(Integer id) {
         checkId(id);
 
-        String query = "SELECT \n" +
-                "    f.FILM_ID AS FILM_ID,\n" +
-                "    f.NAME AS NAME,\n" +
-                "    f.DESCRIPTION AS DESCRIPTION,\n" +
-                "    f.RELEASE_DATE AS RELEASE_DATE,\n" +
-                "    f.DURATION AS DURATION,\n" +
-                "    r.RATING_ID AS RATING_ID,\n" +
-                "    r.NAME AS RATING,\n" +
-                "    COALESCE(GROUP_CONCAT(DISTINCT g.GENRE_ID ORDER BY g.GENRE_ID), '') AS GENRES_ID,\n" +
-                "    COALESCE(GROUP_CONCAT(DISTINCT g.NAME ORDER BY g.GENRE_ID), '') AS GENRES\n" +
-                "FROM \n" +
-                "    FILMS f\n" +
-                "LEFT JOIN \n" +
-                "    RATINGS r ON f.RATING_ID = r.RATING_ID\n" +
-                "LEFT JOIN \n" +
-                "    FILM_GENRE fg ON f.FILM_ID = fg.FILM_ID\n" +
-                "LEFT JOIN \n" +
-                "    GENRES g ON fg.GENRE_ID = g.GENRE_ID\n" +
-                "WHERE f.FILM_ID = ? \n" +
-                "GROUP BY \n" +
-                "    f.FILM_ID, r.RATING_ID;";
+        String query = """
+                SELECT\s
+                    f.FILM_ID AS FILM_ID,
+                    f.NAME AS NAME,
+                    f.DESCRIPTION AS DESCRIPTION,
+                    f.RELEASE_DATE AS RELEASE_DATE,
+                    f.DURATION AS DURATION,
+                    r.RATING_ID AS RATING_ID,
+                    r.NAME AS RATING,
+                    COALESCE(GROUP_CONCAT(DISTINCT g.GENRE_ID ORDER BY g.GENRE_ID), '') AS GENRES_ID,
+                    COALESCE(GROUP_CONCAT(DISTINCT g.NAME ORDER BY g.GENRE_ID), '') AS GENRES
+                FROM\s
+                    FILMS f
+                LEFT JOIN\s
+                    RATINGS r ON f.RATING_ID = r.RATING_ID
+                LEFT JOIN\s
+                    FILM_GENRE fg ON f.FILM_ID = fg.FILM_ID
+                LEFT JOIN\s
+                    GENRES g ON fg.GENRE_ID = g.GENRE_ID
+                WHERE f.FILM_ID = ?\s
+                GROUP BY\s
+                    f.FILM_ID, r.RATING_ID;""";
         try {
             return jdbcTemplate.queryForObject(query, (resultSet, rowNum) -> {
                 Film film = new Film();
@@ -173,26 +174,27 @@ public class FilmDAO {
     }
 
     public List<Film> findAllFilms() {
-        String query = "SELECT \n" +
-                "    f.FILM_ID AS FILM_ID,\n" +
-                "    f.NAME AS NAME,\n" +
-                "    f.DESCRIPTION AS DESCRIPTION,\n" +
-                "    f.RELEASE_DATE AS RELEASE_DATE,\n" +
-                "    f.DURATION AS DURATION,\n" +
-                "    r.RATING_ID AS RATING_ID,\n" +
-                "    r.NAME AS RATING,\n" +
-                "    COALESCE(GROUP_CONCAT(DISTINCT g.GENRE_ID ORDER BY g.GENRE_ID), '') AS GENRES_ID,\n" +
-                "    COALESCE(GROUP_CONCAT(DISTINCT g.NAME ORDER BY g.NAME), '') AS GENRES\n" +
-                "FROM \n" +
-                "    FILMS f\n" +
-                "LEFT JOIN \n" +
-                "    RATINGS r ON f.RATING_ID = r.RATING_ID\n" +
-                "LEFT JOIN \n" +
-                "    FILM_GENRE fg ON f.FILM_ID = fg.FILM_ID\n" +
-                "LEFT JOIN \n" +
-                "    GENRES g ON fg.GENRE_ID = g.GENRE_ID\n" +
-                "GROUP BY \n" +
-                "    f.FILM_ID, r.RATING_ID;";
+        String query = """
+                SELECT\s
+                    f.FILM_ID AS FILM_ID,
+                    f.NAME AS NAME,
+                    f.DESCRIPTION AS DESCRIPTION,
+                    f.RELEASE_DATE AS RELEASE_DATE,
+                    f.DURATION AS DURATION,
+                    r.RATING_ID AS RATING_ID,
+                    r.NAME AS RATING,
+                    COALESCE(GROUP_CONCAT(DISTINCT g.GENRE_ID ORDER BY g.GENRE_ID), '') AS GENRES_ID,
+                    COALESCE(GROUP_CONCAT(DISTINCT g.NAME ORDER BY g.NAME), '') AS GENRES
+                FROM\s
+                    FILMS f
+                LEFT JOIN\s
+                    RATINGS r ON f.RATING_ID = r.RATING_ID
+                LEFT JOIN\s
+                    FILM_GENRE fg ON f.FILM_ID = fg.FILM_ID
+                LEFT JOIN\s
+                    GENRES g ON fg.GENRE_ID = g.GENRE_ID
+                GROUP BY\s
+                    f.FILM_ID, r.RATING_ID;""";
         return jdbcTemplate.query(query, (resultSet, rowNum) -> {
             Film film = new Film();
             film.setId(resultSet.getInt("FILM_ID"));
@@ -233,31 +235,32 @@ public class FilmDAO {
     }
 
     public List<Film> getPopularFilms(int count) {
-        String query = "SELECT \n" +
-                "    f.FILM_ID AS FILM_ID,\n" +
-                "    f.NAME AS NAME,\n" +
-                "    f.DESCRIPTION AS DESCRIPTION,\n" +
-                "    f.RELEASE_DATE AS RELEASE_DATE,\n" +
-                "    f.DURATION AS DURATION,\n" +
-                "    r.RATING_ID AS RATING_ID,\n" +
-                "    r.NAME AS RATING,\n" +
-                "    COALESCE(GROUP_CONCAT(DISTINCT g.GENRE_ID ORDER BY g.GENRE_ID), '') AS GENRES_ID,\n" +
-                "    COALESCE(GROUP_CONCAT(DISTINCT g.NAME ORDER BY g.NAME), '') AS GENRES\n" +
-                "FROM \n" +
-                "    FILMS f\n" +
-                "LEFT JOIN \n" +
-                "    RATINGS r ON f.RATING_ID = r.RATING_ID\n" +
-                "LEFT JOIN \n" +
-                "    FILM_GENRE fg ON f.FILM_ID = fg.FILM_ID\n" +
-                "LEFT JOIN \n" +
-                "    GENRES g ON fg.GENRE_ID = g.GENRE_ID\n" +
-                "LEFT JOIN \n" +
-                "    LIKES l ON f.FILM_ID = l.FILM_ID\n" +
-                "GROUP BY \n" +
-                "    f.FILM_ID, r.RATING_ID\n" +
-                "ORDER BY \n" +
-                "   COUNT(DISTINCT l.USER_ID) DESC\n" +
-                "LIMIT ?;";
+        String query = """
+                SELECT\s
+                    f.FILM_ID AS FILM_ID,
+                    f.NAME AS NAME,
+                    f.DESCRIPTION AS DESCRIPTION,
+                    f.RELEASE_DATE AS RELEASE_DATE,
+                    f.DURATION AS DURATION,
+                    r.RATING_ID AS RATING_ID,
+                    r.NAME AS RATING,
+                    COALESCE(GROUP_CONCAT(DISTINCT g.GENRE_ID ORDER BY g.GENRE_ID), '') AS GENRES_ID,
+                    COALESCE(GROUP_CONCAT(DISTINCT g.NAME ORDER BY g.NAME), '') AS GENRES
+                FROM\s
+                    FILMS f
+                LEFT JOIN\s
+                    RATINGS r ON f.RATING_ID = r.RATING_ID
+                LEFT JOIN\s
+                    FILM_GENRE fg ON f.FILM_ID = fg.FILM_ID
+                LEFT JOIN\s
+                    GENRES g ON fg.GENRE_ID = g.GENRE_ID
+                LEFT JOIN\s
+                    LIKES l ON f.FILM_ID = l.FILM_ID
+                GROUP BY\s
+                    f.FILM_ID, r.RATING_ID
+                ORDER BY\s
+                   COUNT(DISTINCT l.USER_ID) DESC
+                LIMIT ?;""";
 
         return jdbcTemplate.query(query, (resultSet, rowNum) -> {
             Film film = new Film();
