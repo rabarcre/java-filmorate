@@ -3,11 +3,13 @@ package ru.yandex.practicum.filmorate.DAO.film;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
+import ru.yandex.practicum.filmorate.exception.IdNotMetException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -22,8 +24,12 @@ import java.sql.Types;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Repository
@@ -66,7 +72,7 @@ public class FilmDAO {
         }, keyHolder);
 
         if (keyHolder.getKey() == null) {
-            throw new RuntimeException("Сгенерированный Id отсутствует");
+            throw new IdNotMetException("Сгенерированный Id отсутствует");
         }
         Integer filmId = keyHolder.getKey().intValue();
 
@@ -326,15 +332,32 @@ public class FilmDAO {
     }
 
     public void addGenres(Integer filmId, List<Integer> genresId) {
-        String checkQuery = "SELECT COUNT(*) FROM FILM_GENRE WHERE FILM_ID = ? AND GENRE_ID = ?";
-        String addQuery = "INSERT INTO FILM_GENRE (FILM_ID, GENRE_ID) VALUES (?, ?)";
+        String existingGenresQuery = "SELECT GENRE_ID FROM FILM_GENRE WHERE FILM_ID = ?";
+        List<Integer> existingGenres = jdbcTemplate.queryForList(existingGenresQuery, Integer.class, filmId);
 
-        for (Integer genreId : genresId) {
-            Integer count = jdbcTemplate.queryForObject(checkQuery, Integer.class, filmId, genreId);
-            if (count == null || count == 0) {
-                jdbcTemplate.update(addQuery, filmId, genreId);
-                log.info("Фильму {} добавлен жанр {}", filmId, genreId);
+        List<Integer> genresToAdd = genresId.stream()
+                .filter(genreId -> !existingGenres.contains(genreId))
+                .collect(Collectors.toList());
+
+        if (genresToAdd.isEmpty()) {
+            return;
+        }
+
+        String addQuery = "INSERT INTO FILM_GENRE (FILM_ID, GENRE_ID) VALUES (?, ?)";
+        jdbcTemplate.batchUpdate(addQuery, new BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                ps.setInt(1, filmId);
+                ps.setInt(2, genresToAdd.get(i));
             }
+
+            @Override
+            public int getBatchSize() {
+                return genresToAdd.size();
+            }
+        });
+        for (Integer genreId : genresToAdd) {
+            log.info("Фильму {} добавлен жанр {}", filmId, genreId);
         }
     }
 
@@ -383,14 +406,14 @@ public class FilmDAO {
     }
 
 
-    public void checkName(Film film) {
+    private void checkName(Film film) {
         if (film.getName().isEmpty() || film.getName() == null) {
             log.error("Название не указано");
             throw new ValidationException("Название должно быть указано");
         }
     }
 
-    public void checkId(Integer filmId) {
+    private void checkId(Integer filmId) {
         if (filmId == null) {
             log.error("Id не указан");
             throw new ValidationException("Id должен быть указан");
@@ -398,7 +421,7 @@ public class FilmDAO {
     }
 
 
-    public void checkDate(Film film) {
+    private void checkDate(Film film) {
         if (film.getReleaseDate() == null) {
             log.error("Дата релиза null");
             throw new ValidationException("Дата релиза не может быть null");
@@ -410,14 +433,14 @@ public class FilmDAO {
         }
     }
 
-    public void checkDuration(Film film) {
+    private void checkDuration(Film film) {
         if (film.getDuration() < 0) {
             log.error("Продолжительность фильма отрицательное число: {} .", film.getDuration());
             throw new ValidationException("Продолжительность фильма должна быть положительным числом");
         }
     }
 
-    public void checkDescription(Film film) {
+    private void checkDescription(Film film) {
         if (film.getDescription() == null) {
             log.error("Описание фильма null");
             throw new ValidationException("Описание фильма не может быть null");
@@ -429,23 +452,25 @@ public class FilmDAO {
         }
     }
 
-    public void checkMpa(Film film) {
+    private void checkMpa(Film film) {
         if (film.getMpa() != null && !mpaExists(film.getMpa().getId())) {
             log.error("MPA с Id {} не существует", film.getMpa().getId());
             throw new ConditionsNotMetException("MPA с ID " + film.getMpa().getId() + " не существует.");
         }
     }
 
-    public boolean mpaExists(int ratingId) {
-        String query = "SELECT COUNT(*) FROM RATINGS WHERE RATING_ID = ? AND name IS NOT NULL";
+    private boolean mpaExists(int ratingId) {
+        String query = "SELECT COUNT(RATING_ID) FROM RATINGS WHERE RATING_ID = ? AND NAME IS NOT NULL";
         Integer count = jdbcTemplate.queryForObject(query, Integer.class, ratingId);
         return count != null && count > 0;
     }
 
-    public void checkGenre(List<Integer> genresId) {
-        if (!genresId.isEmpty()) {
+    private void checkGenre(List<Integer> genresId) {
+        if (genresId != null && !genresId.isEmpty()) {
+            Set<Integer> existingGenres = new HashSet<>(genreExists(genresId));
+
             for (int id : genresId) {
-                if (!genreExists(id)) {
+                if (!existingGenres.contains(id)) {
                     log.error("Жанр с Id {} не существует", id);
                     throw new ConditionsNotMetException("Жанр с ID " + id + " не существует.");
                 }
@@ -453,20 +478,24 @@ public class FilmDAO {
         }
     }
 
-    public boolean genreExists(int genreId) {
-        String query = "SELECT COUNT(*) FROM GENRES WHERE GENRE_ID = ?";
-        Long count = jdbcTemplate.queryForObject(query, Long.class, genreId);
-        log.debug("Проверка существования жанра с ID {}: count = {}", genreId, count);
-        return count != null && count > 0;
+    private List<Integer> genreExists(List<Integer> genresId) {
+        String query = "SELECT GENRE_ID FROM GENRES WHERE GENRE_ID IN (" +
+                String.join(",", Collections.nCopies(genresId.size(), "?")) + ")";
+
+        Object[] params = genresId.toArray();
+
+        List<Integer> existingGenres = jdbcTemplate.queryForList(query, params, Integer.class);
+        log.debug("Существующие жанры: {}", existingGenres);
+        return existingGenres;
     }
 
-    public boolean filmExistsDb(int filmId) {
-        String query = "SELECT COUNT(*) FROM FILMS WHERE FILM_ID = ?";
+    private boolean filmExistsDb(int filmId) {
+        String query = "SELECT COUNT(FILM_ID) FROM FILMS WHERE FILM_ID = ?";
         Integer count = jdbcTemplate.queryForObject(query, Integer.class, filmId);
         return (count != null && count > 0);
     }
 
-    public void filmExists(int filmId) {
+    private void filmExists(int filmId) {
         if (!filmExistsDb(filmId)) {
             log.error("Фильм с Id {} не существует", filmId);
             throw new ConditionsNotMetException("Фильм с ID " + filmId + " не существует.");
@@ -474,12 +503,12 @@ public class FilmDAO {
     }
 
     private boolean userExistsDb(int userId) {
-        String query = "SELECT COUNT(*) FROM USERS WHERE USER_ID = ?";
+        String query = "SELECT COUNT(USER_ID) FROM USERS WHERE USER_ID = ?";
         Integer count = jdbcTemplate.queryForObject(query, Integer.class, userId);
         return count != null && count > 0;
     }
 
-    public void userExist(int userId) {
+    private void userExist(int userId) {
         if (!userExistsDb(userId)) {
             log.error("Пользователь с Id {} не существует", userId);
             throw new ValidationException("Пользователь с ID " + userId + " не существует.");

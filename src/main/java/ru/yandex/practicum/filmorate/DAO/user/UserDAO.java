@@ -8,6 +8,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
+import ru.yandex.practicum.filmorate.exception.FriendException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
@@ -62,7 +63,7 @@ public class UserDAO {
         }
         validateUser(user);
 
-        if (!userExistsDb(user.getId())) {
+        if (!hasUserInDb(user.getId())) {
             throw new ConditionsNotMetException("Пользователь с ID " + user.getId() + " не найден.");
         }
 
@@ -78,9 +79,9 @@ public class UserDAO {
     }
 
     public void addFriend(Integer userId, Integer friendId) {
-        userExists(userId);
-        userExists(friendId);
-        if (friendshipExists(userId, friendId)) {
+        isUserExists(userId);
+        isUserExists(friendId);
+        if (isFriendshipExists(userId, friendId)) {
             log.error("Дружба между {} и {} уже существует", userId, friendId);
             throw new IllegalArgumentException("Дружба между " + userId + " и " + friendId + " уже существует");
         }
@@ -91,13 +92,13 @@ public class UserDAO {
             log.info("Пользователь {} теперь дружит с {}", userId, friendId);
         } catch (DataAccessException e) {
             log.error("Ошибка при добавлении дружбы между {} и {}: {}", userId, friendId, e.getMessage());
-            throw new RuntimeException("Не удалось добавить дружбу", e);
+            throw new FriendException("Не удалось добавить дружбу", e);
         }
     }
 
     public void deleteFriend(Integer userId, Integer friendId) {
-        userExists(userId);
-        userExists(friendId);
+        isUserExists(userId);
+        isUserExists(friendId);
 
         String query = "DELETE FROM FRIENDSHIPS WHERE USER_ID = ? AND FRIEND_ID = ?";
 
@@ -109,7 +110,7 @@ public class UserDAO {
     }
 
     public Set<User> getAllFriends(Integer userId) {
-        userExists(userId);
+        isUserExists(userId);
         try {
             log.info("Получение списка друзей пользователя {}", userId);
 
@@ -124,13 +125,13 @@ public class UserDAO {
             return new HashSet<>(friendList);
         } catch (RuntimeException e) {
             log.error("Ошибка при получении списка друзей для пользователя {}: {}", userId, e.getMessage());
-            throw new RuntimeException("Ошибка при получении списка друзей", e);
+            throw new FriendException("Ошибка при получении списка друзей", e);
         }
     }
 
     public Set<User> getMutualFriends(Integer userId1, Integer userId2) {
-        userExists(userId1);
-        userExists(userId2);
+        isUserExists(userId1);
+        isUserExists(userId2);
 
         String query = "SELECT u.* " +
                 "FROM USERS u " +
@@ -163,20 +164,20 @@ public class UserDAO {
         }
     }
 
-    boolean userExistsDb(Integer id) {
-        String query = "SELECT COUNT(*) FROM USERS WHERE USER_ID = ?";
+    private boolean hasUserInDb(Integer id) {
+        String query = "SELECT COUNT(USER_ID) FROM USERS WHERE USER_ID = ?";
         Integer count = jdbcTemplate.queryForObject(query, Integer.class, id);
         return (count != null && count > 0);
     }
 
-    public void userExists(Integer userId) {
-        if (!userExistsDb(userId)) {
+    private void isUserExists(Integer userId) {
+        if (!hasUserInDb(userId)) {
             throw new ConditionsNotMetException("Пользователя с Id " + userId + " не существует");
         }
     }
 
-    private boolean friendshipExists(Integer userId, Integer friendId) {
-        String query = "SELECT COUNT(*) FROM FRIENDSHIPS WHERE USER_ID = ? AND FRIEND_ID = ?";
+    private boolean isFriendshipExists(Integer userId, Integer friendId) {
+        String query = "SELECT COUNT(USER_ID) FROM FRIENDSHIPS WHERE USER_ID = ? AND FRIEND_ID = ?";
         Integer count = jdbcTemplate.queryForObject(query, Integer.class, userId, friendId);
         return count != null && count > 0;
     }
